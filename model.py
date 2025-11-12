@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 import os
 
 class Linear_QNet(nn.Module):
@@ -32,26 +33,27 @@ class QTrainer:
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        reward = torch.tensor(reward, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
+        state = torch.tensor(np.array(state), dtype=torch.float)
+        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
+        reward = torch.tensor(np.array(reward), dtype=torch.float)
+        action = torch.tensor(np.array(action), dtype=torch.long)
 
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            reward = torch.unsqueeze(reward, 0)
-            action = torch.unsqueeze(action, 0)
-            done = (done, )
+        if state.ndim == 1:
+            state = state.unsqueeze(0)
+            next_state = next_state.unsqueeze(0)
+            reward = reward.unsqueeze(0)
+            action = action.unsqueeze(0)
+            done = (done,)
 
         prediction = self.model(state)
-        target = prediction.clone()
+        target = prediction.clone().detach()
         for i in range(len(done)):
             Q_new = reward[i]
-            if not done:
-                Q_new = reward[i] + self.gamma * torch.max(self.model(next_state[i]))
+            if not done[i]:
+                Q_new = reward[i] + self.gamma * torch.max(self.model(next_state[i]).detach())
 
-            target[i][torch.argmax(action)] = Q_new
+            target[i][torch.argmax(action[i]).item()] = Q_new
+
 
         # Q_new = R + gamma * max(next_predicted Q)
         self.optimizer.zero_grad()

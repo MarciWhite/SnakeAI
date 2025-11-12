@@ -102,10 +102,11 @@ class Agent():
         self.trainer.train_step(state, action, reward, next_state, done)
     def get_action(self, state):
         # randomness in the beginning: tradeoff between exploration and exploitation
-        self.epsilon = 80-self.n_games
+        self.epsilon = max(1, 80 - self.n_games)
         final_move = [0,0,0]
         if random.randint(0,200) < self.epsilon:
-            final_move[random.randint(0, 2)] = 1
+            rand = random.randint(0, 2)
+            final_move[rand] = 1
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
