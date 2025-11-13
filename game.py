@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pygame
 import torch
 
@@ -34,24 +36,31 @@ BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 20
-SPEED = 30
-
+SPEED = 100
+WIDTH = 640
+HEIGHT = 480
 
 class SnakeGame:
 
-    def __init__(self, ai = True, w=1280//2, h=960//2):
+    def __init__(self, ai = True, settings=None, render=True):
         #init variables
+        settings = settings or {}
         self.frame_iteration = None
         self.ai = ai
-        self.hard_boundary = True
-        self.food = None
+        self.render = render
+        self.closest_food = None
         self.score = None
         self.snake = None
         self.head = None
         self.direction = None
-        self.w = w
-        self.h = h
-        # init display
+
+        self.w = settings.get("width", WIDTH)
+        self.h = settings.get("height", HEIGHT)
+        self.speed = settings.get("speed", SPEED)
+        self.block_size = settings.get("block_size", BLOCK_SIZE)
+        self.start_size = settings.get("snake_start_size", 3)
+        self.hard_boundary = settings.get("hard_boundary", True)
+
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
@@ -60,76 +69,59 @@ class SnakeGame:
         self.reset()
     def reset(self):
         self.direction = Direction.RIGHT
-        self.start_size = 3
         self.head = Point(self.w / 2, self.h / 2)
-        self.snake = [self.head] + [Point(self.head.x - i*BLOCK_SIZE, self.head.y) for i in range(self.start_size-1)]
+        self.snake = [self.head] + [Point(self.head.x - i*self.block_size, self.head.y) for i in range(self.start_size-1)]
 
         self.score = 0
-        self.food = None
+        self.closest_food = None
         self._place_food()
         self.frame_iteration = 0
-    def test(self):
-        sign = lambda x: math.copysign(1, x)
-        head = self.head
-        horizontal = [Direction.RIGHT, Direction.LEFT]
-        vertical = [Direction.UP, Direction.DOWN]
-        state = [
-            # Danger straight
-            # Breakdown: we use custom implemented signum to check if we should add block size or subtract, we map it to 0 1 with modulus for each direction and subtract one so we get either -1 or 0 which correspond to -1 or +1 signum and the check if the game.direction is the same as the checked direction
-            any([self.direction == i and self.is_collision(
-                Point(sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.x, head.y)) for i in
-                 horizontal]) or
-            any([self.direction == i and self.is_collision(
-                Point(head.x, sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.y)) for i in
-                 vertical]),
-            # Danger right
-            any([ self.direction == j and self.is_collision(
-                Point(sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.x, head.y)) for i, j in
-                 zip(horizontal, vertical[::-1])]) or
-            any([self.direction == j and self.is_collision(
-                Point(head.x, sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.y)) for i, j in
-                 zip(vertical, horizontal)]),
-
-            # Danger left
-            any([self.direction == j  and self.is_collision(
-                Point(sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.x, head.y)) for i, j in
-                 zip(horizontal, vertical)]) or
-            any([self.direction == j and self.is_collision(
-                Point(head.x, sign((int(i.value) % 2) - 1) * BLOCK_SIZE + head.y)) for i, j in
-                 zip(vertical, horizontal[::-1])]),
-        ]
-        if any(state):
-            print(state)
-
 
     def _place_food(self):
-        x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        self.food = Point(x, y)
-        if self.food in self.snake:
-            self._place_food()
+        while True:
+            x = random.randint(0, (self.w - self.block_size) // self.block_size) * self.block_size
+            y = random.randint(0, (self.h - self.block_size) // self.block_size) * self.block_size
+            new_food = Point(x, y)
+            if new_food not in self.snake:
+                self.closest_food = new_food
+                break
+    def _distance(self, a, b):
+        return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)/self.block_size
+
+    def export_settings(self) -> Dict:
+        return {
+            "speed": self.speed,
+            "width": WIDTH,
+            "height": HEIGHT,
+            "block_size": self.block_size,
+            "snake_start_size": self.start_size,
+            "hard_boundary": True
+        }
 
     def play_step(self, action=None):
-        self.frame_iteration+=1
+        self.frame_iteration += 1
         # 1. collect user input
-
         if not self.ai:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
-            if event.type == pygame.KEYDOWN and not self._out_of_bounds([self.head]):
-                if event.key == pygame.K_a and self.direction != Direction.RIGHT:
-                    self.direction = Direction.LEFT
-                elif event.key == pygame.K_d and self.direction != Direction.LEFT:
-                    self.direction = Direction.RIGHT
-                elif event.key == pygame.K_w and self.direction != Direction.DOWN:
-                    self.direction = Direction.UP
-                elif event.key == pygame.K_s and self.direction != Direction.UP:
-                    self.direction = Direction.DOWN
+                if event.type == pygame.KEYDOWN and not self._out_of_bounds([self.head]):
+                    if event.key == pygame.K_a and self.direction != Direction.RIGHT:
+                        self.direction = Direction.LEFT
+                    elif event.key == pygame.K_d and self.direction != Direction.LEFT:
+                        self.direction = Direction.RIGHT
+                    elif event.key == pygame.K_w and self.direction != Direction.DOWN:
+                        self.direction = Direction.UP
+                    elif event.key == pygame.K_s and self.direction != Direction.UP:
+                        self.direction = Direction.DOWN
         else:
-            # Determine direction based on action [straight, left, right]
-            clock_wise = [Direction.RIGHT,Direction.DOWN,Direction.LEFT,Direction.UP]
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+            # Determine direction based on action [straight, right, left]
+            clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
             curr = clock_wise.index(self.direction)
             action = np.array(action)
             move = int(np.argmax(action))  # 0=straight, 1=right, 2=left
@@ -142,35 +134,56 @@ class SnakeGame:
             self.direction = new_direction
 
         # 2. move
-        self._move(self.direction)  # update the head
+        prev_head = self.head  # store position before moving
+        self._move(self.direction)
         self.snake.insert(0, self.head)
 
-        # 3. check if game over
-        reward = 0
-        if self.is_collision() or self._out_of_bounds() or (self.ai and self.frame_iteration > 100*len(self.snake)):
-            reward = -10
-            return reward, True, self.score
+        # 3. compute reward, check for game over
+        reward, done, score = self._get_reward(prev_head)
+        if done:
+            return reward, True, score
 
-        # 4. place new food or just move
-        if self.head == self.food:
+        # 4. update UI and clock
+        if self.render:
+            self._update_ui()
+            self.clock.tick(self.speed)
+
+        # 5. return reward and score
+        return reward, False, score
+
+    def _get_reward(self, prev_head):
+        STEP_PENALTY = -0.05
+        DISTANCE_WEIGHT = -0.05
+        CLOSER_REWARD = 0.05
+        FOOD_REWARD = 10
+        DEATH_PENALTY = -10
+
+        max_dist = self._distance(Point(0, 0), Point(WIDTH, HEIGHT))
+        prev_dist = self._distance(prev_head, self.closest_food)
+        new_dist = self._distance(self.head, self.closest_food)
+        normalized_dist = new_dist / max_dist
+
+        reward = STEP_PENALTY + DISTANCE_WEIGHT * normalized_dist
+
+        # check collisions or timeout
+        if self.is_collision() or self._out_of_bounds() or (self.ai and self.frame_iteration > len(self.snake) * (self.w * self.h) // (BLOCK_SIZE ** 2) // 10):
+            return DEATH_PENALTY, True, self.score
+
+        # food collected
+        if self.head == self.closest_food:
             self.score += 1
-            reward=10
+            reward = FOOD_REWARD
             self._place_food()
         else:
             self.snake.pop()
 
-        # 5. update ui and clock
-        self._update_ui()
-        self.clock.tick(SPEED)
-        #self.test()
-        # 6. return game over and score
         return reward, False, self.score
 
     def is_collision(self, pt=None):
         if pt is None:
             pt = self.head
         # hits boundary
-        if self.hard_boundary and (pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0):
+        if self.hard_boundary and (pt.x > self.w - self.block_size or pt.x < 0 or pt.y > self.h - self.block_size or pt.y < 0):
            return True
         # hits itself
         if pt in self.snake[1:]:
@@ -180,15 +193,20 @@ class SnakeGame:
     def _out_of_bounds(self, list=None):
         #Check if the snake ran off-screen
         if list is None: list = self.snake
-        return all([(i.x > self.w - BLOCK_SIZE or i.x < 0 or i.y > self.h - BLOCK_SIZE or i.y < 0) for i in list])
+        return all([(i.x > self.w - self.block_size or i.x < 0 or i.y > self.h - self.block_size or i.y < 0) for i in list])
     def _update_ui(self):
         self.display.fill(BLACK)
-
+        inner_margin = self.block_size * 0.2  # 20% margin
+        inner_size = self.block_size - 2 * inner_margin
         for pt in self.snake:
-            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x + 4, pt.y + 4, 12, 12))
+            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, self.block_size, self.block_size))
+            pygame.draw.rect(
+                self.display,
+                BLUE2,
+                pygame.Rect(pt.x + inner_margin, pt.y + inner_margin, inner_size, inner_size)
+            )
 
-        pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
+        pygame.draw.rect(self.display, RED, pygame.Rect(self.closest_food.x, self.closest_food.y, self.block_size, self.block_size))
 
         text = font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
@@ -198,27 +216,27 @@ class SnakeGame:
         x = self.head.x
         y = self.head.y
         if direction == Direction.RIGHT:
-            x += BLOCK_SIZE
+            x += self.block_size
         elif direction == Direction.LEFT:
-            x -= BLOCK_SIZE
+            x -= self.block_size
         elif direction == Direction.DOWN:
-            y += BLOCK_SIZE
+            y += self.block_size
         elif direction == Direction.UP:
-            y -= BLOCK_SIZE
+            y -= self.block_size
 
         self.head = Point(x, y)
 
         if self.hard_boundary: return
 
-        if self.head.x > self.w - BLOCK_SIZE or self.head.x < 0:
-            self.head = Point(self.w - self.head.x - BLOCK_SIZE, self.head.y)
-        elif self.head.y > self.h - BLOCK_SIZE or self.head.y < 0:
-            self.head = Point(self.head.x, self.h - self.head.y - BLOCK_SIZE)
+        if self.head.x > self.w - self.block_size or self.head.x < 0:
+            self.head = Point(self.w - self.head.x - self.block_size, self.head.y)
+        elif self.head.y > self.h - self.block_size or self.head.y < 0:
+            self.head = Point(self.head.x, self.h - self.head.y - self.block_size)
 
 
 #User controlled
 if __name__ == '__main__':
-    game = SnakeGame()
+    game = SnakeGame(False)
     score = 0
     # game loop
     while not game.ai:
