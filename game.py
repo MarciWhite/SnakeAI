@@ -1,9 +1,6 @@
 from typing import Dict
 
 import pygame
-import torch
-
-import pygame
 import random
 from enum import Enum
 from collections import namedtuple
@@ -98,6 +95,7 @@ class SnakeGame:
             "hard_boundary": True
         }
 
+
     def play_step(self, action=None):
         self.frame_iteration += 1
         # 1. collect user input
@@ -118,8 +116,7 @@ class SnakeGame:
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
+                    print("Stop")
             # Determine direction based on action [straight, right, left]
             clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
             curr = clock_wise.index(self.direction)

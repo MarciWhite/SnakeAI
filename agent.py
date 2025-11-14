@@ -5,7 +5,6 @@ from typing import Dict
 import torch
 import random
 import numpy as np
-from sympy.physics.paulialgebra import epsilon
 
 from model import Linear_QNet, QTrainer
 from game import SnakeGame, Direction, Point, BLOCK_SIZE
@@ -46,15 +45,16 @@ def plot(scores, mean_scores):
 
 
 class Agent():
-    def __init__(self, model_metadata=None):
+    def __init__(self, model_metadata=None,settings=None):
 
         if model_metadata is None:
-            settings = {}
+            settings = settings or {}
         else:
             settings = model_metadata.get("model_settings") or {}
+
         self.n_games = settings.get("num_game", 0)
         self.max_memory = settings.get("max_memory", 100_000)
-        self.batch_size = settings.get("batch_size", 1000)
+        self.batch_size = settings.get("batch_size", BATCH_SIZE)
         self.learning_rate = settings.get("learning_rate", 0.001)
 
         self.epsilon_decay = settings.get("epsilon_decay", 0.01)
@@ -88,6 +88,33 @@ class Agent():
             "hidden_size": self.hidden_size,
             "num_game": self.n_games,
         }
+
+    def export_stats(self) -> dict:
+        """
+        Returns a dict with runtime info about the agent:
+        - epsilon
+        - memory usage
+        - number of games
+        - learning parameters
+        - estimated model accuracy
+        """
+        stats = {
+            "memory_filled": len(self.memory),
+            "max_memory": self.memory.maxlen,
+            "num_games": self.n_games,
+            "current_epsilon": self.epsilon,
+            "epsilon_start": self.epsilon_start,
+            "epsilon_min": self.epsilon_min,
+            "epsilon_decay": self.epsilon_decay,
+            "batch_size": self.batch_size,
+            "learning_rate": self.learning_rate,
+            "gamma": self.gamma,
+            "hidden_size": self.hidden_size
+        }
+        return stats
+
+
+
 
     def get_state(self, game: SnakeGame):
         head = game.head
@@ -138,8 +165,8 @@ class Agent():
 
 
     def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        if len(self.memory) > self.batch_size:
+            mini_sample = random.sample(self.memory, self.batch_size) # list of tuples
         else:
             mini_sample = self.memory
         states, actions, rewards, next_states, dones = zip(*mini_sample)
@@ -163,83 +190,3 @@ class Agent():
             final_move[move] = 1
 
         return final_move
-
-
-def load_model_metadata(load_file_name):
-    folder = "./model/"
-    metadata_file = os.path.join(folder, "metadata.json")
-
-    if not os.path.exists(metadata_file):
-        print("No metadata.json found. Cannot load model.")
-        return
-
-    with open(metadata_file, "r") as f:
-        metadata = json.load(f)
-
-    # load the model
-    if load_file_name == "highest":
-        model_metadata = max(metadata["models"], key=lambda x: x["score"])
-    elif load_file_name == "latest":
-        model_metadata = max(metadata["models"], key=lambda x: x["timestamp"])
-    else:
-        model_metadata = next((x for x in metadata["models"] if x["file"] == load_file_name), None)
-
-    if model_metadata is None:
-        raise Exception(f"Metadata for {load_file_name} not found")
-
-    return model_metadata
-
-def start(load_file_name=None):
-    folder = "./model/"
-    metadata_file = os.path.join(folder, "metadata.json")
-
-    if not os.path.exists(metadata_file):
-        print("No metadata.json found.")
-        highscore = 0
-    else:
-        highscore = 0
-        with open(metadata_file, "r") as f:
-            metadata = json.load(f)
-            highscore = metadata["highscore"]
-
-
-    plot_scores = []
-
-    if load_file_name is None:
-        agent = Agent()
-        game = SnakeGame(ai=True,render=False)
-    else:
-        model_metadata = load_model_metadata(load_file_name)
-        plot_scores.append(model_metadata["mean_score"])
-        agent = Agent(model_metadata)
-        game = SnakeGame(ai=True,render=True, settings=model_metadata.get("game_settings",None))
-
-    print(f"Training started with settings: {agent.export_settings()} and game settings: {game.export_settings()}")
-    while 1:
-        state_old = agent.get_state(game)
-
-        #get move
-        move = agent.get_action(state_old)
-
-        reward, done, score = game.play_step(move)
-        state_new = agent.get_state(game)
-
-        agent.train_short_memory(state_old, move, reward, state_new, done)
-        agent.remember(state_old, move, reward, state_new, done)
-
-        if done:
-            game.reset()
-            plot_scores.append(score)
-            print(f"Game #{agent.n_games} finished with score {score}, current mean score: {np.mean(plot_scores):.2f}")
-            agent.n_games += 1
-            agent.train_long_memory()
-            if score > highscore:
-                highscore = score
-                agent.model.save(score,np.mean(plot_scores),agent.export_settings(),game.export_settings())
-
-
-            #plot(plot_scores, plot_mean_scores)
-
-if __name__ == '__main__':
-    start("highest")
-
