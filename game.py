@@ -6,6 +6,8 @@ from enum import Enum
 from collections import namedtuple
 import numpy as np
 import math
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 
@@ -92,7 +94,7 @@ class SnakeGame:
             "height": HEIGHT,
             "block_size": self.block_size,
             "snake_start_size": self.start_size,
-            "hard_boundary": True
+            "hard_boundary": self.hard_boundary
         }
 
 

@@ -84,7 +84,7 @@ class Linear_QNet(nn.Module):
 
         print(f"Model saved: {file_name} | Score: {score}")
 
-    def load(self, file_name, device, train=True):
+    def load(self, file_name, device):
         folder = "./model/"
 
         try:
@@ -94,10 +94,6 @@ class Linear_QNet(nn.Module):
             return
 
         print(f"Successfully loaded {file_name} using {device}")
-        if not train:
-            self.eval()
-        else:
-            self.train()
 
 class QTrainer:
     def __init__(self, model, lr, gamma, device):

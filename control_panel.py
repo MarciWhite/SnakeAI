@@ -1,7 +1,9 @@
+import csv
 import json
 import os
 
 import numpy as np
+import torch
 
 from agent import Agent
 from game import SnakeGame
@@ -72,6 +74,8 @@ class ControlPanel(QWidget):
                     self.score_label.setText(f"Last Score: {info['last_score']}")
                     self.mean_label.setText(f"Mean Score: {info['mean_score']:.2f}")
                     self.game_label.setText(f"Game: {info['num_games']}")
+                    self.highscore_label.setText(f"Highscore: {info['model_highscore']}")
+                    self.hotstreak_label.setText(f"Hot streak: {info['hot_streak']}")
 
                     # Agent stats
                     self.epsilon_label.setText(f"Current Epsilon: {info.get('current_epsilon', 0.0):.3f}")
@@ -136,6 +140,7 @@ class ControlPanel(QWidget):
         self.epsilon_decay_spin.setRange(0.0, 0.1)
         self.epsilon_decay_spin.setSingleStep(0.001)
         self.epsilon_decay_spin.setValue(0.01)
+        self.epsilon_decay_spin.setDecimals(3)
         self.epsilon_decay_spin.setPrefix("Epsilon Decay: ")
         self.main_layout.addWidget(self.epsilon_decay_spin)
 
@@ -339,6 +344,7 @@ class ControlPanel(QWidget):
         if choice == 0:
             if self.selected_file is not None:
                 selected_model = self.selected_file
+                self.selected_file = None
         else:
             selected_model = ["highest","latest"][choice-1]
         self.ai_process = Process(
@@ -347,12 +353,16 @@ class ControlPanel(QWidget):
         )
         self.ai_process.start()
 
-        print("Starting training with settings:", settings)
-
+        #print("Starting training with settings:", settings)
+        eval_mode = False
+        try:
+            eval_mode = settings["model_settings"]["eval"]
+        except KeyError as e:
+            print("Key Error")
         self.clear_layout(self.main_layout)
-        self.training_menu()
+        self.training_menu(eval_mode)
 
-    def training_menu(self):
+    def training_menu(self, eval_mode=False):
         self.menu = "Train"
 
         # --- Game Stats Header ---
@@ -362,10 +372,12 @@ class ControlPanel(QWidget):
         self.main_layout.addWidget(self.game_stats_header)
 
         # Game stats labels
+        self.highscore_label = QLabel("Highscore: 0")
         self.score_label = QLabel("Score: 0")
-        self.mean_label = QLabel("Mean: 0.0")
+        self.mean_label = QLabel("Mean Score: 0.0")
         self.game_label = QLabel("Game: 0")
-        for lbl in [self.score_label, self.mean_label, self.game_label]:
+        self.hotstreak_label = QLabel("Hotstreak: 0")
+        for lbl in [self.score_label, self.mean_label, self.game_label, self.hotstreak_label, self.highscore_label]:
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setStyleSheet("font-size: 12px; color: #333;")
             self.main_layout.addWidget(lbl)
@@ -391,11 +403,14 @@ class ControlPanel(QWidget):
             lbl.setStyleSheet("font-size: 12px; color: #333;")
             self.main_layout.addWidget(lbl)
 
-        self.save_button = QPushButton("Save Model")
-        self.save_button.clicked.connect(self.save_model)
-        self.main_layout.addWidget(self.save_button)
+        if not eval_mode:
+            self.save_button = QPushButton("Save Model")
+            self.save_button.clicked.connect(self.save_model)
+            self.main_layout.addWidget(self.save_button)
 
-        self.stop_button = QPushButton("Stop Training")
+            self.stop_button = QPushButton("Stop Training")
+        else:
+            self.stop_button = QPushButton("Stop Evaluating")
         self.stop_button.clicked.connect(self.stop_training)
         self.main_layout.addWidget(self.stop_button)
 
@@ -410,8 +425,8 @@ class ControlPanel(QWidget):
                 self.ai_process.terminate()
                 print("AI training process terminated successfully")
 
-            self.clear_layout(self.main_layout)
-            self.init_ui()
+        self.clear_layout(self.main_layout)
+        self.init_ui()
 
 
 
@@ -421,6 +436,29 @@ def run_gui():
     window.show()
     sys.exit(app.exec_())
 
+
+def add_to_csv(load_file_name, games, score, acc_reward):
+    folder = "./statistics/"
+    if load_file_name is not None:
+        csv_path = os.path.join(folder,f"statistics_{load_file_name.replace(".pth","")}.csv")
+        os.makedirs(folder, exist_ok=True)
+
+        write_header = not os.path.exists(csv_path)
+        with open(csv_path, 'a', newline='') as f:
+            writer = csv.writer(f)
+
+            # write header first if file was newly created
+            if write_header:
+                writer.writerow(["episode", "score","accumulated_reward"])
+
+            # append the new score
+            writer.writerow([games, score,acc_reward])
+    else:
+        print("While evaluating you must load a model.")
+
+
+
+SAMPLE_SIZE = 1000
 def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=None):
     folder = "./model/"
     metadata_file = os.path.join(folder, "metadata.json")
@@ -447,9 +485,10 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
         highscore = metadata["highscore"]
 
 
-
     scores = []
-
+    model_highscore = 0
+    hot_streak = 0
+    episodes = 0
     if load_file_name is None:
         if settings is None:
             agent = Agent()
@@ -458,12 +497,68 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
             agent = Agent(settings=settings["model_settings"])
             game = SnakeGame(ai=True, render=settings["game_settings"]["render"],settings=settings["game_settings"])
     else:
+        load_file_name = os.path.basename(load_file_name)
         model_metadata = load_model_metadata(load_file_name)
         agent = Agent(model_metadata)
-        game = SnakeGame(ai=True, render=True, settings=model_metadata.get("game_settings", None))
-        scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
+        render = True
+        if settings is not None:
+            render = settings["game_settings"]["render"]
+        model_highscore = model_metadata["score"]
+        game = SnakeGame(ai=True, render=render, settings=model_metadata.get("game_settings", None))
+        if settings["model_settings"]["eval"]: scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
         print(f"Training started with settings: {agent.export_settings()} and game settings: {game.export_settings()}")
+    try:
+        if settings["model_settings"]["eval"]:
+            agent.epsilon = 0
+            agent.epsilon_min = 0
+            agent.model.eval()
+        else:
+            agent.model.train()
+    except Exception as e:
+        agent.model.train() #Key Error
     while not stop_event.is_set():
+
+        # Evaluate
+        if settings["model_settings"]["eval"]:
+
+            game.reset()
+            done = False
+            score = 0
+            accumulated_reward = 0
+            with torch.no_grad():  # No gradient computation
+                while not done:
+                    state = agent.get_state(game)
+                    move = agent.get_action(state)
+                    reward, done, score = game.play_step(move)
+                    accumulated_reward += reward
+            scores.append(score)
+            episodes+=1
+            add_to_csv(load_file_name,episodes,score, accumulated_reward)
+            print(f"Eval episode {episodes} complete.")
+            if score > model_highscore:
+                model_highscore = score
+
+            mean_score = np.mean(scores) if scores else 0
+            if score > mean_score:
+                hot_streak+=1
+            else:
+                hot_streak = 0
+            # Send back live stats
+            info = agent.export_stats()
+            info["model_highscore"] = model_highscore
+            info["last_score"] = score
+            info["mean_score"] = mean_score
+            info["hot_streak"] = hot_streak
+            if update_queue is not None:
+                update_queue.put(info)
+
+            if episodes == SAMPLE_SIZE:
+                print("Sampling complete. Exiting...")
+                stop_event.set()
+            continue
+
+
+
         state_old = agent.get_state(game)
 
         #get move
@@ -478,7 +573,7 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
         if save_event.is_set():
             print("Save event triggered - Saving model...")
             agent.model.save(
-                score,
+                model_highscore,
                 np.mean(scores) if scores else 0,
                 agent.export_settings(),
                 game.export_settings()
@@ -497,12 +592,24 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
                 highscore = score
                 agent.model.save(score,np.mean(scores),agent.export_settings(),game.export_settings())
 
+            if score > model_highscore:
+                model_highscore = score
+            mean_score = np.mean(scores) if scores else 0
+            if score > mean_score:
+                hot_streak+=1
+            else:
+                hot_streak = 0
             # Send back live stats
             info = agent.export_stats()
+            info["model_highscore"] = model_highscore
             info["last_score"] = score
-            info["mean_score"] = np.mean(scores) if scores else 0
+            info["mean_score"] = mean_score
+            info["hot_streak"] = hot_streak
             if update_queue is not None:
                 update_queue.put(info)
+
+            if settings["game_settings"]["stats"]:
+                add_to_csv(load_file_name, agent.n_games, score, 0)
 
     # Stopping gracefully comes here
     print("Graceful stop")
