@@ -11,6 +11,9 @@ import os
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
         self.l1 = nn.Linear(input_size, hidden_size)
         #self.l2 = nn.Linear(hidden_size, hidden_size)
         self.l2 = nn.Linear(hidden_size, output_size)
@@ -59,6 +62,7 @@ class Linear_QNet(nn.Module):
             "model_settings": {
                 "learning_rate": 0.001,
                 "gamma": 0.8,
+                "current_epsilon": 0.9,
                 "epsilon_start": 1.0,
                 "epsilon_min": 0.0,
                 "epsilon_decay": 0.01,
@@ -98,36 +102,50 @@ class Linear_QNet(nn.Module):
 class QTrainer:
     def __init__(self, model, lr, gamma, device):
         self.model = model
+        self.target_model = Linear_QNet(self.model.input_size, self.model.hidden_size,self.model.output_size,)
+
+        # Copy the weights to synchronize them at the start
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model.eval()
+
+
         self.lr = lr
         self.gamma = gamma
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
         self.device = device
-    def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(np.array(state), dtype=torch.float).to(self.device)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float).to(self.device)
-        reward = torch.tensor(np.array(reward), dtype=torch.float).to(self.device)
-        action = torch.tensor(np.array(action), dtype=torch.long).to(self.device)
 
-        if state.ndim == 1:
-            state = state.unsqueeze(0)
-            next_state = next_state.unsqueeze(0)
-            reward = reward.unsqueeze(0)
-            action = action.unsqueeze(0)
-            done = (done,)
+    def update_target_network(self):
+        self.target_model.load_state_dict(self.model.state_dict())
 
-        prediction = self.model(state)
-        target = prediction.clone().detach()
-        for i in range(len(done)):
-            Q_new = reward[i]
-            if not done[i]:
-                Q_new = reward[i] + self.gamma * torch.max(self.model(next_state[i]).detach())
+    def train_step(self, states, actions, rewards, next_states, dones):
+        states = torch.tensor(np.array(states), dtype=torch.float).to(self.device)
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float).to(self.device)
+        rewards = torch.tensor(np.array(rewards), dtype=torch.float).to(self.device)
 
-            target[i][torch.argmax(action[i]).item()] = Q_new
+        actions = torch.tensor(np.array(actions), dtype=torch.long).to(self.device).unsqueeze(1)
 
+        dones = torch.tensor(np.array(dones), dtype=torch.bool).to(self.device)
 
-        # Q_new = R + gamma * max(next_predicted Q)
+        # Get all Q-values from the policy model
+        pred = self.model(states)  # Shape: [BATCH_SIZE, 3]
+
+        # Use .gather() to select the specific Q-value for the action we took
+        pred_actions = pred.gather(1, actions).squeeze(1)  # Shape: [BATCH_SIZE]
+
+        # Do ONE batch forward pass on the target network
+        Q_next = self.target_model(next_states).detach()
+
+        # Find the max Q-value for the next state
+        max_Q_next = torch.max(Q_next, dim=1)[0]  # Shape: [BATCH_SIZE]
+
+        # Y_t = R if done
+        # Y_t = R + gamma * max_Q_next if not done
+        Y_target = rewards + self.gamma * max_Q_next * (~dones)  # (~dones) acts as a (1 - done) mask
+
+        # Calculate loss and backpropagate
         self.optimizer.zero_grad()
-        loss = self.criterion(target, prediction)
+        loss = self.criterion(pred_actions, Y_target)
         loss.backward()
         self.optimizer.step()
+

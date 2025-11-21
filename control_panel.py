@@ -84,11 +84,11 @@ class ControlPanel(QWidget):
                     self.batch_label.setText(f"Batch Size: {info.get('batch_size', 0)}")
                     self.lr_label.setText(f"Learning Rate: {info.get('learning_rate', 0.0)}")
                     self.gamma_label.setText(f"Gamma: {info.get('gamma', 0.0)}")
-                    self.hidden_label.setText(f"Hidden Size: {info.get('hidden_size', 0)}")
+                    self.hidden_label.setText(f"Hidden Size: {info.get('hidden_size', 256)}")
                     self.epsilon_params_label.setText(
                         f"Epsilon Params: start={info.get('epsilon_start', 0.0):.2f}, "
                         f"min={info.get('epsilon_min', 0.0):.2f}, "
-                        f"decay={info.get('epsilon_decay', 0.0):.4f}"
+                        f"decay={info.get('epsilon_decay', 0.00002):.6f}"
                     )
                 except Exception as e:
                     print(e)
@@ -138,9 +138,9 @@ class ControlPanel(QWidget):
         # epsilon_decay
         self.epsilon_decay_spin = QDoubleSpinBox()
         self.epsilon_decay_spin.setRange(0.0, 0.1)
-        self.epsilon_decay_spin.setSingleStep(0.001)
-        self.epsilon_decay_spin.setValue(0.01)
-        self.epsilon_decay_spin.setDecimals(3)
+        self.epsilon_decay_spin.setSingleStep(0.00001)
+        self.epsilon_decay_spin.setValue(0.00002)
+        self.epsilon_decay_spin.setDecimals(6)
         self.epsilon_decay_spin.setPrefix("Epsilon Decay: ")
         self.main_layout.addWidget(self.epsilon_decay_spin)
 
@@ -247,7 +247,7 @@ class ControlPanel(QWidget):
     def clear_model_labels(self):
         """Remove existing model info labels."""
         for label in self.model_labels:
-            self.layout.removeWidget(label)
+            self.main_layout.removeWidget(label)
             label.deleteLater()
         self.model_labels.clear()
 
@@ -286,7 +286,6 @@ class ControlPanel(QWidget):
     def show_model_info(self, metadata):
         """Show metadata labels when a model is loaded."""
         timestamp = metadata.get("timestamp", "unknown")
-        # Convert "20251113_172625" → readable format
         try:
             dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
             readable_time = dt.strftime("%b %d, %Y – %H:%M")
@@ -428,6 +427,13 @@ class ControlPanel(QWidget):
         self.clear_layout(self.main_layout)
         self.init_ui()
 
+    def alert(self, title, message):
+        QMessageBox.information(
+            self,
+            title,
+            message
+        )
+
 
 
 def run_gui():
@@ -520,8 +526,8 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
 
         # Evaluate
         if settings["model_settings"]["eval"]:
-
             game.reset()
+            agent.reset_steps()
             done = False
             score = 0
             accumulated_reward = 0
@@ -529,12 +535,13 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
                 while not done:
                     state = agent.get_state(game)
                     move = agent.get_action(state)
-                    reward, done, score = game.play_step(move)
+                    reward, done, score = game.play_step(action=move, agent=agent)
                     accumulated_reward += reward
             scores.append(score)
             episodes+=1
             add_to_csv(load_file_name,episodes,score, accumulated_reward)
             print(f"Eval episode {episodes} complete.")
+
             if score > model_highscore:
                 model_highscore = score
 
@@ -549,6 +556,7 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
             info["last_score"] = score
             info["mean_score"] = mean_score
             info["hot_streak"] = hot_streak
+            info["num_games"] = episodes
             if update_queue is not None:
                 update_queue.put(info)
 
@@ -564,7 +572,8 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
         #get move
         move = agent.get_action(state_old)
 
-        reward, done, score = game.play_step(move)
+        reward, done, score = game.play_step(action=move, agent=agent)
+
         state_new = agent.get_state(game)
 
         agent.train_short_memory(state_old, move, reward, state_new, done)
@@ -583,14 +592,15 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
 
         # Game is over
         if done:
+            print(f"Game #{agent.n_games} finished with score {score}, current mean score: {np.mean(scores) if scores else 0:.2f} Idle death: {agent.steps_left == 0}")
             game.reset()
+            agent.reset_steps()
             scores.append(score)
-            print(f"Game #{agent.n_games} finished with score {score}, current mean score: {np.mean(scores):.2f}")
             agent.n_games += 1
             agent.train_long_memory()
             if score > highscore:
                 highscore = score
-                agent.model.save(score,np.mean(scores),agent.export_settings(),game.export_settings())
+                agent.model.save(score,np.mean(scores) if scores else 0,agent.export_settings(),game.export_settings())
 
             if score > model_highscore:
                 model_highscore = score

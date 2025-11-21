@@ -51,16 +51,18 @@ class Agent():
             settings = settings or {}
         else:
             settings = model_metadata.get("model_settings") or {}
-
+        self.n_steps = 0
         self.n_games = settings.get("num_game", 0)
         self.max_memory = settings.get("max_memory", 100_000)
         self.batch_size = settings.get("batch_size", BATCH_SIZE)
         self.learning_rate = settings.get("learning_rate", 0.001)
 
-        self.epsilon_decay = settings.get("epsilon_decay", 0.01)
+        self.epsilon_decay = settings.get("epsilon_decay", 0.00004)
         self.epsilon_min = settings.get("epsilon_min", 0.0)
         self.epsilon_start = settings.get("epsilon_start", 0.95)
-        self.epsilon = self.epsilon_start
+        self.epsilon = settings.get("current_epsilon", self.epsilon_start)
+        self.max_idle_steps = 800
+        self.steps_left = self.max_idle_steps
 
         self.gamma = settings.get("gamma", 0.8)
         self.hidden_size = settings.get("hidden_size", 256)
@@ -70,7 +72,7 @@ class Agent():
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # initialize model and trainer
-        self.model = Linear_QNet(11, self.hidden_size, 3).to(device)
+        self.model = Linear_QNet(12, self.hidden_size, 3).to(device)
         if model_metadata is not None:
             self.model.load(model_metadata["file"],device)
             print(f"Model highscore: {model_metadata['score']}\nNumber of games: {self.n_games}")
@@ -80,13 +82,14 @@ class Agent():
         return {
             "learning_rate": self.learning_rate,
             "gamma": self.gamma,
+            "current_epsilon": self.epsilon,
             "epsilon_start": self.epsilon_start,
             "epsilon_min": self.epsilon_min,
             "epsilon_decay": self.epsilon_decay,
             "batch_size": self.batch_size,
             "max_memory": self.max_memory,
             "hidden_size": self.hidden_size,
-            "num_game": self.n_games,
+            "num_game": self.n_games
         }
 
     def export_stats(self) -> dict:
@@ -153,10 +156,13 @@ class Agent():
             game.closest_food.x < game.head.x,
             game.closest_food.x > game.head.x,
             game.closest_food.y < game.head.x,
-            game.closest_food.x > game.head.x
+            game.closest_food.x > game.head.x,
+
+            self.steps_left/self.max_idle_steps # How many idle steps until killed normalised
         ]
 
-        return np.array(state, dtype=int)
+
+        return np.array(state, dtype=float)
 
 
 
@@ -170,17 +176,31 @@ class Agent():
         else:
             mini_sample = self.memory
         states, actions, rewards, next_states, dones = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, dones)
+        action_indices = [np.argmax(action).item() for action in actions]
+        self.trainer.train_step(states, action_indices, rewards, next_states, dones)
 
 
     def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
+        action_idx = np.argmax(action).item()
+        self.trainer.train_step([state], [action_idx], [reward], [next_state], [done])
+
+    def reset_steps(self):
+        # Reset steps after eating apple
+        self.steps_left = self.max_idle_steps
 
     def get_action(self, state):
         # randomness in the beginning: tradeoff between exploration and exploitation
-        self.epsilon = max(self.epsilon_min, self.epsilon_start - (self.n_games * self.epsilon_decay))
+        # epsilon decays after each step
+        self.epsilon = max(self.epsilon_min, self.epsilon-self.epsilon_decay)
+        self.steps_left -= 1
+
+        self.n_steps+=1
+
+        if self.n_steps % 1000 == 0:
+            self.trainer.update_target_network()
+        #self.epsilon = max(self.epsilon_min, self.epsilon_start - (self.n_games * self.epsilon_decay))
         final_move = [0,0,0]
-        if random.randint(0,100) < self.epsilon*100:
+        if random.random() < self.epsilon:
             rand = random.randint(0, 2)
             final_move[rand] = 1
         else:

@@ -1,10 +1,9 @@
 import os
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 STAT_FOLDER = "./statistics"
-
+OUT_FOLDER = "./graphs/"
 def process_csv(csv_path):
 
     df = pd.read_csv(csv_path)
@@ -24,8 +23,6 @@ def process_csv(csv_path):
 
     plt.figure(figsize=(14, 10))
 
-
-    # ----- Plot 1: Score + Mean Score -----
     plt.subplot(2, 1, 1)
     plt.plot(df["episode"], df["score"], label="Score per Episode")
     plt.plot(df["episode"], df["mean_score"], label="Mean Score (10 eps)", linewidth=2)
@@ -46,8 +43,6 @@ def process_csv(csv_path):
         bbox=dict(facecolor='white', alpha=0.7, edgecolor='black')
     )
 
-
-    # ----- Plot 2: Crash Detection -----
     plt.subplot(2, 1, 2)
     plt.plot(df["episode"], df["accumulated_reward"], label="Accumulated Reward")
     plt.plot(df["episode"], df["reward_mean"], linewidth=2, label="Reward Mean")
@@ -69,6 +64,8 @@ def process_csv(csv_path):
     plt.tight_layout()
 
     base = os.path.basename(csv_path).replace(".csv", "").replace("statistics_","")
+
+    os.makedirs(OUT_FOLDER, exist_ok = True)
     out_path = f"./graphs/training_analysis_{base}.png"
 
     plt.savefig(out_path, dpi=300)
