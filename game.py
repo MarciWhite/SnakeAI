@@ -98,7 +98,7 @@ class SnakeGame:
         }
 
 
-    def play_step(self, action=None):
+    def play_step(self, action=None,agent=None):
         self.frame_iteration += 1
         # 1. collect user input
         if not self.ai:
@@ -135,10 +135,13 @@ class SnakeGame:
         # 2. move
         prev_head = self.head  # store position before moving
         self._move(self.direction)
-        self.snake.insert(0, self.head)
 
         # 3. compute reward, check for game over
-        reward, done, score = self._get_reward(prev_head)
+        if agent is None:
+            print("Agent is none")
+            return 0, True, 0
+
+        reward, done, score = self._get_reward(prev_head, agent)
         if done:
             return reward, True, score
 
@@ -150,31 +153,32 @@ class SnakeGame:
         # 5. return reward and score
         return reward, False, score
 
-    def _get_reward(self, prev_head):
-        STEP_PENALTY = -0.05
-        DISTANCE_WEIGHT = -0.05
-        CLOSER_REWARD = 0.05
+    def _get_reward(self, prev_head, agent):
         FOOD_REWARD = 10
         DEATH_PENALTY = -10
+        STEP_PENALTY = -0.01
 
-        max_dist = self._distance(Point(0, 0), Point(WIDTH, HEIGHT))
-        prev_dist = self._distance(prev_head, self.closest_food)
-        new_dist = self._distance(self.head, self.closest_food)
-        normalized_dist = new_dist / max_dist
-
-        reward = STEP_PENALTY + DISTANCE_WEIGHT * normalized_dist
-
-        # check collisions or timeout
-        if self.is_collision() or self._out_of_bounds() or (self.ai and self.frame_iteration > len(self.snake) * (self.w * self.h) // (BLOCK_SIZE ** 2) // 10):
+        if self.is_collision() or (self._out_of_bounds() and self.hard_boundary) or (self.ai and agent.steps_left <= 0):
             return DEATH_PENALTY, True, self.score
 
-        # food collected
         if self.head == self.closest_food:
             self.score += 1
-            reward = FOOD_REWARD
+            agent.reset_steps()
             self._place_food()
+
+            return FOOD_REWARD, False, self.score
         else:
             self.snake.pop()
+
+        prev_dist = self._distance(prev_head, self.closest_food)
+        curr_dist = self._distance(self.head, self.closest_food)
+
+        reward = STEP_PENALTY
+
+        if curr_dist < prev_dist:
+            reward += 0.1
+        else:
+            reward -= 0.1
 
         return reward, False, self.score
 
@@ -189,10 +193,10 @@ class SnakeGame:
             return True
 
         return False
-    def _out_of_bounds(self, list=None):
+    def _out_of_bounds(self, snake_list=None):
         #Check if the snake ran off-screen
-        if list is None: list = self.snake
-        return all([(i.x > self.w - self.block_size or i.x < 0 or i.y > self.h - self.block_size or i.y < 0) for i in list])
+        if snake_list is None: snake_list = self.snake
+        return all([(i.x > self.w - self.block_size or i.x < 0 or i.y > self.h - self.block_size or i.y < 0) for i in snake_list])
     def _update_ui(self):
         self.display.fill(BLACK)
         inner_margin = self.block_size * 0.2  # 20% margin
@@ -224,6 +228,8 @@ class SnakeGame:
             y -= self.block_size
 
         self.head = Point(x, y)
+        self.snake.insert(0, self.head)
+
 
         if self.hard_boundary: return
 
