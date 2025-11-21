@@ -1,0 +1,734 @@
+{
+    "highscore": 66,
+    "models": [
+        {
+            "file": "model_20251117_210015.pth",
+            "file_path": "./model/model_20251117_210015.pth",
+            "score": 58,
+            "mean_score": 4.657648283038502,
+            "timestamp": "20251117_210015",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.7,
+                "current_epsilon": 0.001,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.001,
+                "epsilon_decay": 2e-05,
+                "batch_size": 1000,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 961
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_215434.pth",
+            "file_path": "./model/model_20251117_215434.pth",
+            "score": 31,
+            "mean_score": 7.505274261603375,
+            "timestamp": "20251117_215434",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.7,
+                "current_epsilon": 0.001,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.001,
+                "epsilon_decay": 2e-05,
+                "batch_size": 1000,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 1896
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_224242.pth",
+            "file_path": "./model/model_20251117_224242.pth",
+            "score": 10,
+            "mean_score": 0.3822414726583649,
+            "timestamp": "20251117_224242",
+            "model_settings": {
+                "learning_rate": 0.0005,
+                "gamma": 0.9,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 1847
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_230207.pth",
+            "file_path": "./model/model_20251117_230207.pth",
+            "score": 28,
+            "mean_score": 4.3397196261682245,
+            "timestamp": "20251117_230207",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.9,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 2140
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_231605.pth",
+            "file_path": "./model/model_20251117_231605.pth",
+            "score": 31,
+            "mean_score": 6.23025613660619,
+            "timestamp": "20251117_231605",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.9,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 3748
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_235109.pth",
+            "file_path": "./model/model_20251117_235109.pth",
+            "score": 38,
+            "mean_score": 2.696608040201005,
+            "timestamp": "20251117_235109",
+            "model_settings": {
+                "learning_rate": 0.0007,
+                "gamma": 0.9,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 1592
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251117_235425.pth",
+            "file_path": "./model/model_20251117_235425.pth",
+            "score": 57,
+            "mean_score": 3.4340567612687813,
+            "timestamp": "20251117_235425",
+            "model_settings": {
+                "learning_rate": 0.0007,
+                "gamma": 0.9,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 1797
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_000649.pth",
+            "file_path": "./model/model_20251118_000649.pth",
+            "score": 66,
+            "mean_score": 1.8983308042488618,
+            "timestamp": "20251118_000649",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.95,
+                "current_epsilon": 0.001,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.001,
+                "epsilon_decay": 2e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 659
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_001050.pth",
+            "file_path": "./model/model_20251118_001050.pth",
+            "score": 66,
+            "mean_score": 3.526315789473684,
+            "timestamp": "20251118_001050",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.8,
+                "current_epsilon": 0.001,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.001,
+                "epsilon_decay": 2e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 798
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_001607.pth",
+            "file_path": "./model/model_20251118_001607.pth",
+            "score": 49,
+            "mean_score": 2.9702479338842975,
+            "timestamp": "20251118_001607",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.8,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 2e-05,
+                "batch_size": 128,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 605
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_003827.pth",
+            "file_path": "./model/model_20251118_003827.pth",
+            "score": 50,
+            "mean_score": 8.78069639584606,
+            "timestamp": "20251118_003827",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.8,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 2e-05,
+                "batch_size": 128,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 2242
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_005223.pth",
+            "file_path": "./model/model_20251118_005223.pth",
+            "score": 22,
+            "mean_score": 0.9402618657937807,
+            "timestamp": "20251118_005223",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.7,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 1000,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 1222
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_010539.pth",
+            "file_path": "./model/model_20251118_010539.pth",
+            "score": 3,
+            "mean_score": 0.28479355488418934,
+            "timestamp": "20251118_010539",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.2512919999870971,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 4965
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_011425.pth",
+            "file_path": "./model/model_20251118_011425.pth",
+            "score": 47,
+            "mean_score": 5.95578231292517,
+            "timestamp": "20251118_011425",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 5847
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_012019.pth",
+            "file_path": "./model/model_20251118_012019.pth",
+            "score": 50,
+            "mean_score": 6.881578947368421,
+            "timestamp": "20251118_012019",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 6257
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_013653.pth",
+            "file_path": "./model/model_20251118_013653.pth",
+            "score": 50,
+            "mean_score": 7.715972222222222,
+            "timestamp": "20251118_013653",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 7697
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_014530.pth",
+            "file_path": "./model/model_20251118_014530.pth",
+            "score": 50,
+            "mean_score": 8.453603976801988,
+            "timestamp": "20251118_014530",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 8671
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_015854.pth",
+            "file_path": "./model/model_20251118_015854.pth",
+            "score": 57,
+            "mean_score": 9.178807947019868,
+            "timestamp": "20251118_015854",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 10183
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_133106.pth",
+            "file_path": "./model/model_20251118_133106.pth",
+            "score": 61,
+            "mean_score": 9.34235876073939,
+            "timestamp": "20251118_133106",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 14024
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_133525.pth",
+            "file_path": "./model/model_20251118_133525.pth",
+            "score": 61,
+            "mean_score": 9.4168834239773,
+            "timestamp": "20251118_133525",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 14412
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_135638.pth",
+            "file_path": "./model/model_20251118_135638.pth",
+            "score": 61,
+            "mean_score": 9.821917808219178,
+            "timestamp": "20251118_135638",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 1.0,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 64,
+                "max_memory": 200000,
+                "hidden_size": 256,
+                "num_game": 15069
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_142521.pth",
+            "file_path": "./model/model_20251118_142521.pth",
+            "score": 59,
+            "mean_score": 8.61837727156386,
+            "timestamp": "20251118_142521",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 3907
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_150457.pth",
+            "file_path": "./model/model_20251118_150457.pth",
+            "score": 61,
+            "mean_score": 12.010939765388164,
+            "timestamp": "20251118_150457",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 7587
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_152948.pth",
+            "file_path": "./model/model_20251118_152948.pth",
+            "score": 61,
+            "mean_score": 12.85133495145631,
+            "timestamp": "20251118_152948",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 9888
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_155325.pth",
+            "file_path": "./model/model_20251118_155325.pth",
+            "score": 61,
+            "mean_score": 13.24001991866545,
+            "timestamp": "20251118_155325",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 12049
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_164658.pth",
+            "file_path": "./model/model_20251118_164658.pth",
+            "score": 65,
+            "mean_score": 14.290909090909091,
+            "timestamp": "20251118_164658",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 16940
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        },
+        {
+            "file": "model_20251118_165516.pth",
+            "file_path": "./model/model_20251118_165516.pth",
+            "score": 65,
+            "mean_score": 14.331884875846502,
+            "timestamp": "20251118_165516",
+            "model_settings": {
+                "learning_rate": 0.001,
+                "gamma": 0.75,
+                "current_epsilon": 0.01,
+                "epsilon_start": 0.95,
+                "epsilon_min": 0.01,
+                "epsilon_decay": 1e-05,
+                "batch_size": 128,
+                "max_memory": 100000,
+                "hidden_size": 256,
+                "num_game": 17720
+            },
+            "game_settings": {
+                "speed": 50,
+                "width": 640,
+                "height": 480,
+                "block_size": 20,
+                "snake_start_size": 3,
+                "hard_boundary": true
+            }
+        }
+    ]
+}
