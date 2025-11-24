@@ -1,36 +1,68 @@
-# Snake AI with  reinforcement learning
-## About the application
-Custom made interactive UI for controlling the training and evaluating process, can be used to set the hyperparameters, load/save models.
+# Snake AI with Reinforcement Learning
+
+## About the Application
+This is a custom-made, interactive UI application for controlling the training and evaluation process of a Reinforcement Learning (RL) Snake agent. It allows users to set hyperparameters, load/save models, and visualize the training progress in real-time.
 
 ## About the AI
-- It uses Q-learning with PyTorch.
-- Optimizer: PyTorch's built-in Adam optimizer
-- Epsilon greedy exploration/exploitation (Note: that it's not optimal for this type of RL)
-- Single hidden layer with changeable neuron count
+The AI is built using **Deep Q-Learning** with **PyTorch**.
 
-## About the saved models
-Saved models are put in the ./model/ folder by default (if it doesn't exist it will create one).
-The saved models are the weights directly exported from PyTorch. 
-The code auto saves highscoring models. Upon first save a metadata.json file will be generated alongside the saved model, which includes information about the models such as hyperparams, score, meanscore etc.
-Feel free to edit this .json reasonably. If you want to delete a saved model you can just delete the model file, the metadata will be updated accordingly upon running the code again. (Note that this also means that after renaming a model will make the program think it was deleted, unless changing the .json file before running the code)
+* **Algorithm:** Q-learning with Experience Replay.
+* **Optimizer:** PyTorch's built-in Adam optimizer.
+* **Strategy:** Epsilon-Greedy exploration/exploitation.
+    * *Note: While not strictly optimal for all RL environments, this serves as a robust baseline.*
+* **Architecture:** Single hidden layer with a changeable neuron count.
 
-## About hyperparameters/parameters
-- Start epsilon value: Number between 0-1, A percentage that decides if it should make a random action or try to predict it. (This is usually around 0.7-0.9 in similar applications)
-- Epsilon decay: Number usually around 0.0001, A number that will be subtracted from the current epsilon after every step making it less and less likely that the move will be random. If the number is too low the learning process will be long, if it's too small the neural network won't have enough time to explore the states.
-- Minimal epsilon: Number usually around 0-0.005, This will set a lower limit to the epsilon, I have found that sometimes It's beneficial to set it to a non-zero value, but you should experiment with it.
-- Gamma: Number between 0-1, It's usually referred to as the discount rate, It determines how the neural network should weigh future rewards. 0 being totally short-sighted, doesn't care about future rewards at all. 1 being It cares equally about long and short term gain. In applications of RL, where strategy is important it should be high. I recommend setting it to something above 0.8 in this case.
-- Learning rate: Number usually around 0.001, This number determines how much the program should tweak the neurons after each learning step. If gamma is too much it causes instability, if it's too low it makes the training process really long. It's usually a good idea to have a higher learning rate at the start of the training and make it lower the further we are into training, but I haven't implemented support for this yet.
-- Hidden size: Number of neurons in the hidden layer, I encourage you to experiment with this. Lower neuron count means that it won't see patterns above a certain complexity, and higher number means it could overfit, and learn really complicated patterns and will fail when presented with a new state due to lack of generalization.
-- Memory size: It determines how much states it should remember. Usually there is no downside of it being a higher number apart from the hardware strain, but sometimes you don't want your model to remember older states.
-- Batch size: Determines how many state will be chosen from memory for each training step. It's usually recommended to keep it relatively small, around 32-64 but I have found that it works with 1000 surprisingly well. I encourage you to experiment with this.
-- Note that there is very little set in stone in reinforcement learning, sometimes even a couple of digits changing could cause drastic shifts in stability, but there are no wrong options within the set limits.
+### Network Architecture (Layers)
+* **Input Layer (12 dimensions):**
+    * 3 neurons: Danger detection (Straight, Right, Left).
+    * 4 neurons: Apple direction (N, E, S, W).
+    * 4 neurons: Current moving direction (N, E, S, W).
+    * 1 neuron: Urgency (0-1 scale representing how urgent it is to find an apple; game ends after a set amount of idle steps).
+* **Hidden Layer:** 1 layer, 256 neurons by default (customizable).
+* **Output Layer:** 3 neurons representing the action for the best predicted outcome (Straight, Right Turn, Left Turn).
 
-## Evaluation and visualisation
-- You have to load a model either by selecting it from your system or choosing one from the dropdown. Check the eval box and start the model.
-- It will simulate the games according to the sample size, which is a 1000 by default, and save the results of them into a .csv file in ./statistics/ folder.
-- I have also included a visualise_stats.py script that creates graphs (and saves them as images to a new folder called ./graphs/) from all the .csv file inside the ./statistics/ folder.
+## About the Saved Models
+Saved models are stored in the `./model/` folder by default (the folder is created if it doesn't exist). The models are weights directly exported from PyTorch.
 
-## Layers
-- Input layer: 12 dimensions: 3 directions for danger, 4 directions for where the apple is, 4 directions for where we are currently moving, number between 0-1 that represents how urgent it is to find an apple (after certain amount of idle steps the game ends)
-- Hidden layer: 
-- Output layer: Direction for the best predicted outcome (0,1,2)
+* **Metadata:** Upon the first save, a `metadata.json` file is generated alongside the model. This includes hyperparameters, high score, and mean score.
+* **Auto-save:** The code automatically saves models that achieve a new high score.
+* **Managing Files:** You can edit the `.json` reasonably. If you want to delete a saved model, simply delete the model file; the metadata will update automatically upon the next run.
+    * *Warning:* If you rename a model file manually, the program will assume the original was deleted unless you also update the `.json` file.
+
+## About Hyperparameters
+Reinforcement learning is highly sensitive to parameters. Note that there is very little set in stone; sometimes changing a parameter by a couple of digits can cause drastic shifts in stability.
+
+* **Start Epsilon:** (0 - 1)
+    * A percentage that decides if the agent should make a random action or try to predict it.
+    * *Typical value:* 0.7 - 0.9.
+* **Epsilon Decay:** (Usually around 0.0001)
+    * The number subtracted from the current epsilon after every step, making random moves less likely over time.
+    * *Too low:* Long learning process.
+    * *Too high:* The network stops exploring before it learns the environment.
+* **Minimal Epsilon:** (0 - 0.005)
+    * Sets a lower limit to epsilon. It is often beneficial to keep this non-zero to maintain slight exploration.
+* **Gamma:** (0 - 1)
+    * Also known as the **discount rate**. It determines how the network weighs future rewards.
+    * *0:* Short-sighted (cares only about immediate rewards).
+    * *1:* Long-sighted (cares equally about long and short-term gains).
+    * *Recommendation:* > 0.8 for strategy-based games.
+* **Learning Rate:** (Usually around 0.001)
+    * Determines how much the program tweaks the neurons after each learning step.
+    * *Too high:* Causes instability.
+    * *Too low:* Makes the training process extremely long.
+* **Hidden Size:**
+    * Number of neurons in the hidden layer.
+    * *Low count:* Won't see patterns above a certain complexity.
+    * *High count:* Can overfit (learns complicated patterns but fails to generalize to new states).
+* **Memory Size:**
+    * Determines how many states the agent remembers. Usually, a higher number is better (limited only by hardware/RAM), though sometimes you may want to limit memory of very old states.
+* **Batch Size:**
+    * Determines how many states are chosen from memory for each training step.
+    * *Typical:* 32-64.
+    * *Note:* I have found that a larger batch size (e.g., 1000) works surprisingly well in this environment.
+
+## Evaluation and Visualisation
+1.  **Load a Model:** Select a model from your system or choose one from the dropdown in the UI.
+2.  **Run Evaluation:** Check the **Eval** box and start the model.
+3.  **Simulation:** It will simulate games according to the sample size (default: 1000) and save the results into a `.csv` file in the `./statistics/` folder.
+4.  **Graphs:** Run the `visualise_stats.py` script. This reads all `.csv` files in the `./statistics/` folder and saves graph images to a new folder called `./graphs/`.
