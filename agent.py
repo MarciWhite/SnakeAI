@@ -47,12 +47,8 @@ def plot(scores, mean_scores):
 class Agent():
     def __init__(self, model_metadata=None,settings=None):
 
-        if model_metadata is None:
-            settings = settings or {}
-        else:
-            settings = model_metadata.get("model_settings") or {}
         self.n_steps = 0
-        self.n_games = settings.get("num_game", 0)
+
         self.max_memory = settings.get("max_memory", 100_000)
         self.batch_size = settings.get("batch_size", BATCH_SIZE)
         self.learning_rate = settings.get("learning_rate", 0.001)
@@ -60,7 +56,7 @@ class Agent():
         self.epsilon_decay = settings.get("epsilon_decay", 0.00004)
         self.epsilon_min = settings.get("epsilon_min", 0.0)
         self.epsilon_start = settings.get("epsilon_start", 0.95)
-        self.epsilon = settings.get("current_epsilon", self.epsilon_start)
+
         self.max_idle_steps = 800
         self.steps_left = self.max_idle_steps
 
@@ -73,9 +69,18 @@ class Agent():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # initialize model and trainer
         self.model = Linear_QNet(12, self.hidden_size, 3).to(device)
-        if model_metadata is not None:
-            self.model.load(model_metadata["file"],device)
+
+
+        if model_metadata is None:
+            self.n_games = 0
+            self.epsilon = self.epsilon_start
+        else:
+            self.n_games = model_metadata["model_settings"].get("num_game", 0)
+            self.epsilon = model_metadata["model_settings"].get("current_epsilon", 0)
+
+            self.model.load(model_metadata["file"], device)
             print(f"Model highscore: {model_metadata['score']}\nNumber of games: {self.n_games}")
+
         self.trainer = QTrainer(self.model, lr=self.learning_rate, gamma=self.gamma, device=device)
 
     def export_settings(self) -> Dict:
