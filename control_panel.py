@@ -254,16 +254,24 @@ class ControlPanel(QWidget):
         # Change labels
         if self.selected_file is not None:
             model_metadata = load_model_metadata(self.selected_file)
+            self.selected_file = model_metadata["file"]
             self.file_label.setText(model_metadata.get("file","No model selected"))
+            self.show_model_info(model_metadata)
         else:
             self.file_label.setText("No model selected")
+
+
 
 
     def clear_model_labels(self):
         """Remove existing model info labels."""
         for label in self.model_labels:
-            self.main_layout.removeWidget(label)
-            label.deleteLater()
+            try:
+                self.main_layout.removeWidget(label)
+                label.deleteLater()
+            except RuntimeError as ex:
+                pass
+                # print("Label already deleted")
         self.model_labels.clear()
 
     def clear_layout(self, layout):
@@ -290,9 +298,11 @@ class ControlPanel(QWidget):
             self.selected_file = file_path
 
             metadata_file = file_name
-            self.clear_model_labels()
+            #self.clear_model_labels()
             model_metadata = load_model_metadata(metadata_file)
             self.show_model_info(model_metadata)
+
+
     def save_model(self):
         if self.ai_process and self.ai_process.is_alive():
             print("Save requested")
@@ -300,6 +310,28 @@ class ControlPanel(QWidget):
 
     def show_model_info(self, metadata):
         """Show metadata labels when a model is loaded."""
+        # Display settings
+        self.toggle_architecture_inputs(False)
+        model_settings = metadata.get("model_settings")
+        game_settings = metadata.get("game_settings")
+        self.lr_spin.setValue(model_settings['learning_rate'])
+        self.gamma_spin.setValue(model_settings['gamma'])
+        self.epsilon_start_spin.setValue(model_settings['epsilon_start'])
+        self.epsilon_min_spin.setValue(model_settings['epsilon_min'])
+        self.epsilon_decay_spin.setValue(model_settings['epsilon_decay'])
+        self.batch_size_spin.setValue(model_settings['batch_size'])
+        self.max_memory_spin.setValue(model_settings['max_memory'])
+        self.hidden_size_spin.setValue(model_settings['hidden_size'])
+
+        self.speed_spin.setValue(game_settings['speed'])
+        self.width_spin.setValue(game_settings['width'])
+        self.height_spin.setValue(game_settings['height'])
+        self.block_size_spin.setValue(game_settings['block_size'])
+        self.snake_start_spin.setValue(game_settings['snake_start_size'])
+        self.hard_boundary_ck.setChecked(game_settings['hard_boundary'])
+
+        # Display other stats
+        self.clear_model_labels()
         timestamp = metadata.get("timestamp", "unknown")
         try:
             dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
@@ -320,6 +352,11 @@ class ControlPanel(QWidget):
             label.setStyleSheet("font-size: 14px; color: #333;")
             self.main_layout.addWidget(label)
             self.model_labels.append(label)
+
+    def toggle_architecture_inputs(self, enable: bool):
+        self.hidden_size_spin.setEnabled(enable)
+        self.gamma_spin.setEnabled(enable)
+        self.hard_boundary_ck.setEnabled(enable)
 
     def start_training(self):
         # Collect all settings into a dict
@@ -348,22 +385,17 @@ class ControlPanel(QWidget):
         }
 
         # Stops training if one is running
-
         self.stop_training()
-
         self.stop_event.clear()
         self.save_event.clear()
 
-        selected_model = None
-        if self.selected_file is not None:
-            selected_model = self.selected_file
-            self.selected_file = None
-
+        print(self.selected_file)
         self.ai_process = Process(
             target=run_ai,
-            args=(self.stop_event, self.save_event, self.update_queue, selected_model, settings)
+            args=(self.stop_event, self.save_event, self.update_queue, self.selected_file, settings)
         )
         self.ai_process.start()
+        self.selected_file = None
 
         #print("Starting training with settings:", settings)
         eval_mode = False
@@ -520,14 +552,16 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
     else:
         load_file_name = os.path.basename(load_file_name)
         model_metadata = load_model_metadata(load_file_name)
-        agent = Agent(model_metadata)
-        render = True
-        if settings is not None:
-            render = settings["game_settings"]["render"]
-            if settings["model_settings"]["eval"]: scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
 
+        if settings is None:
+            print("Something went wrong. Settings can't be None when loading model.")
+            return
+
+        agent = Agent(model_metadata=model_metadata,settings=settings["model_settings"])
+        game = SnakeGame(ai=True, render=settings["game_settings"]["render"], settings=settings["game_settings"])
+
+        if not settings["model_settings"]["eval"]: scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
         model_highscore = model_metadata["score"]
-        game = SnakeGame(ai=True, render=render, settings=model_metadata.get("game_settings", None))
 
 
         print(f"Training started with settings: {agent.export_settings()} and game settings: {game.export_settings()}")
@@ -540,6 +574,7 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
             agent.model.train()
     except Exception as e:
         agent.model.train() #Key Error
+
 
     while not stop_event.is_set():
 
