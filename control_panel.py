@@ -37,7 +37,6 @@ def load_model_metadata(load_file_name):
 
     if model_metadata is None:
         print(f"Metadata for {load_file_name} not found")
-    print(3)
     return model_metadata
 
 
@@ -235,6 +234,7 @@ class ControlPanel(QWidget):
         self.model_combo.addItem("-- Select Model --")
         self.model_combo.addItems(["Highest Score", "Last Trained"])
         self.main_layout.addWidget(self.model_combo)
+        self.model_combo.currentIndexChanged.connect(self.handle_selection_change)
 
         self.file_label = QLabel("No file selected")
         self.main_layout.addWidget(self.file_label)
@@ -242,6 +242,21 @@ class ControlPanel(QWidget):
         self.start_button = QPushButton("Start Training")
         self.start_button.clicked.connect(self.start_training)
         self.main_layout.addWidget(self.start_button)
+
+    def handle_selection_change(self, index):
+        if index == 1:
+            self.selected_file = "highest"
+        elif index == 2:
+            self.selected_file = "latest"
+        else:
+            self.selected_file = None
+
+        # Change labels
+        if self.selected_file is not None:
+            model_metadata = load_model_metadata(self.selected_file)
+            self.file_label.setText(model_metadata.get("file","No model selected"))
+        else:
+            self.file_label.setText("No model selected")
 
 
     def clear_model_labels(self):
@@ -333,19 +348,17 @@ class ControlPanel(QWidget):
         }
 
         # Stops training if one is running
+
         self.stop_training()
 
         self.stop_event.clear()
         self.save_event.clear()
 
-        choice = self.model_combo.currentIndex()
         selected_model = None
-        if choice == 0:
-            if self.selected_file is not None:
-                selected_model = self.selected_file
-                self.selected_file = None
-        else:
-            selected_model = ["highest","latest"][choice-1]
+        if self.selected_file is not None:
+            selected_model = self.selected_file
+            self.selected_file = None
+
         self.ai_process = Process(
             target=run_ai,
             args=(self.stop_event, self.save_event, self.update_queue, selected_model, settings)
@@ -360,6 +373,7 @@ class ControlPanel(QWidget):
             print("Key Error")
         self.clear_layout(self.main_layout)
         self.training_menu(eval_mode)
+
 
     def training_menu(self, eval_mode=False):
         self.menu = "Train"
@@ -415,6 +429,7 @@ class ControlPanel(QWidget):
 
 
     def stop_training(self):
+        self.menu = "Stopping"
         if self.ai_process and self.ai_process.is_alive():
             print("Stopping training...")
             self.stop_event.set()
@@ -509,9 +524,12 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
         render = True
         if settings is not None:
             render = settings["game_settings"]["render"]
+            if settings["model_settings"]["eval"]: scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
+
         model_highscore = model_metadata["score"]
         game = SnakeGame(ai=True, render=render, settings=model_metadata.get("game_settings", None))
-        if settings["model_settings"]["eval"]: scores = [model_metadata["mean_score"] for _ in range(agent.n_games)]
+
+
         print(f"Training started with settings: {agent.export_settings()} and game settings: {game.export_settings()}")
     try:
         if settings["model_settings"]["eval"]:
@@ -522,6 +540,7 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
             agent.model.train()
     except Exception as e:
         agent.model.train() #Key Error
+
     while not stop_event.is_set():
 
         # Evaluate
@@ -623,6 +642,7 @@ def run_ai(stop_event, save_event, update_queue, load_file_name=None, settings=N
 
     # Stopping gracefully comes here
     print("Graceful stop")
+    game.stop()
 
 
 

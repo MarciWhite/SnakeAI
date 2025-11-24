@@ -7,9 +7,8 @@ from collections import namedtuple
 import numpy as np
 import math
 import os
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-pygame.init()
-font = pygame.font.Font('arial.ttf', 25)
 
 #reset
 #reward
@@ -42,6 +41,7 @@ HEIGHT = 480
 class SnakeGame:
 
     def __init__(self, ai = True, settings=None, render=True):
+        print("Game Initiating")
         #init variables
         settings = settings or {}
         self.frame_iteration = None
@@ -52,6 +52,8 @@ class SnakeGame:
         self.snake = None
         self.head = None
         self.direction = None
+        self.display = None
+        self.font = None
 
         self.w = settings.get("width", WIDTH)
         self.h = settings.get("height", HEIGHT)
@@ -60,12 +62,34 @@ class SnakeGame:
         self.start_size = settings.get("snake_start_size", 3)
         self.hard_boundary = settings.get("hard_boundary", True)
 
-        self.display = pygame.display.set_mode((self.w, self.h))
-        pygame.display.set_caption('Snake')
+        self.set_rendering(self.render)
+
         self.clock = pygame.time.Clock()
 
         # init game state
         self.reset()
+
+    def set_rendering(self, active: bool):
+        self.render = active
+
+        if active:
+            if self.display is None:
+                pygame.init()
+                pygame.font.init()
+
+                self.display = pygame.display.set_mode((self.w, self.h))
+                pygame.display.set_caption('Snake')
+                if self.font is None:
+                    try:
+                        self.font = pygame.font.Font('arial.ttf', 25)
+                    except OSError:
+                        self.font = pygame.font.SysFont('arial', 25)
+        else:
+            if self.display is not None:
+                pygame.display.quit()
+                pygame.font.quit()
+                self.display = None
+
     def reset(self):
         self.direction = Direction.RIGHT
         self.head = Point(self.w / 2, self.h / 2)
@@ -75,6 +99,8 @@ class SnakeGame:
         self.closest_food = None
         self._place_food()
         self.frame_iteration = 0
+    def stop(self):
+        pygame.display.quit()
 
     def _place_food(self):
         while True:
@@ -104,8 +130,7 @@ class SnakeGame:
         if not self.ai:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
+                    self.set_rendering(False)
                 if event.type == pygame.KEYDOWN and not self._out_of_bounds([self.head]):
                     if event.key == pygame.K_a and self.direction != Direction.RIGHT:
                         self.direction = Direction.LEFT
@@ -198,6 +223,9 @@ class SnakeGame:
         if snake_list is None: snake_list = self.snake
         return all([(i.x > self.w - self.block_size or i.x < 0 or i.y > self.h - self.block_size or i.y < 0) for i in snake_list])
     def _update_ui(self):
+        if not self.render: return
+        if not self.display: return
+
         self.display.fill(BLACK)
         inner_margin = self.block_size * 0.2  # 20% margin
         inner_size = self.block_size - 2 * inner_margin
@@ -211,7 +239,7 @@ class SnakeGame:
 
         pygame.draw.rect(self.display, RED, pygame.Rect(self.closest_food.x, self.closest_food.y, self.block_size, self.block_size))
 
-        text = font.render("Score: " + str(self.score), True, WHITE)
+        text = self.font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
         pygame.display.flip()
 
